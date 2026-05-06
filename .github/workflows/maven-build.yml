@@ -46,10 +46,15 @@ jobs:
             --name petclinic-cluster \
             --region ap-south-1
 
-      - name: Wait for nodes to be Ready
+      - name: Verify nodes are Ready
         run: |
-          echo "Waiting for all nodes to be Ready..."
-          kubectl wait --for=condition=Ready nodes --all --timeout=300s
+          NODE_COUNT=$(kubectl get nodes --no-headers 2>/dev/null | wc -l)
+          if [ "$NODE_COUNT" -eq 0 ]; then
+            echo "ERROR: No nodes in the cluster."
+            echo "Run the 'Setup EKS Infrastructure' workflow first from the Actions tab."
+            exit 1
+          fi
+          kubectl wait --for=condition=Ready nodes --all --timeout=120s
           echo "Nodes ready:"
           kubectl get nodes -o wide
 

@@ -30,21 +30,63 @@ jobs:
       - name: Create EKS cluster (skip if already exists)
         run: |
           if eksctl get cluster --name petclinic-cluster --region ap-south-1 2>/dev/null; then
-            echo "Cluster already exists, skipping creation."
+            echo "Cluster already exists, skipping cluster creation."
           else
             echo "Creating EKS cluster... this takes ~15 minutes."
-            eksctl create cluster -f eksctl/cluster.yaml
+            eksctl create cluster \
+              --name petclinic-cluster \
+              --region ap-south-1 \
+              --version 1.30 \
+              --without-nodegroup
+            echo "Cluster control plane created."
           fi
 
-      - name: Create petclinic namespace
+      - name: Update kubeconfig
         run: |
           aws eks update-kubeconfig --name petclinic-cluster --region ap-south-1
-          kubectl apply -f k8s/namespace.yaml
 
-      - name: Cluster ready
+      - name: Create node group (skip if already exists)
+        run: |
+          if eksctl get nodegroup \
+              --cluster petclinic-cluster \
+              --region ap-south-1 \
+              --name petclinic-nodes 2>/dev/null; then
+            echo "Node group already exists, skipping."
+          else
+            echo "Creating managed node group..."
+            eksctl create nodegroup \
+              --cluster petclinic-cluster \
+              --region ap-south-1 \
+              --name petclinic-nodes \
+              --node-type t3.medium \
+              --nodes 2 \
+              --nodes-min 1 \
+              --nodes-max 3 \
+              --managed
+          fi
+
+      - name: Wait for nodes to be Ready
+        run: |
+          echo "Waiting for nodes to join and become Ready..."
+          for i in $(seq 1 30); do
+            NODE_COUNT=$(kubectl get nodes --no-headers 2>/dev/null | wc -l)
+            READY_COUNT=$(kubectl get nodes --no-headers 2>/dev/null | grep -c " Ready" || true)
+            echo "  ($i/30) Nodes total=$NODE_COUNT ready=$READY_COUNT"
+            if [ "$NODE_COUNT" -gt 0 ] && [ "$NODE_COUNT" -eq "$READY_COUNT" ]; then
+              echo "All nodes are Ready."
+              break
+            fi
+            sleep 20
+          done
+          kubectl get nodes -o wide
+
+      - name: Create petclinic namespace
+        run: kubectl apply -f k8s/namespace.yaml
+
+      - name: Done
         run: |
           echo "============================================"
-          echo " EKS cluster is ready!"
+          echo " EKS cluster is ready with nodes!"
           echo " Push to main to trigger auto-deployment."
           echo "============================================"
           kubectl get nodes
