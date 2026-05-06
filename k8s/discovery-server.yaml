@@ -32,8 +32,12 @@ spec:
             - name: CONFIG_SERVER_URL
               value: http://config-server:8888/
           resources:
+            requests:
+              memory: 256Mi
+              cpu: 200m
             limits:
               memory: 512Mi
+              cpu: 500m
           startupProbe:
             httpGet:
               path: /actuator/health

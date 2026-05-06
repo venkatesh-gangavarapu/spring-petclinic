@@ -46,6 +46,13 @@ jobs:
             --name petclinic-cluster \
             --region ap-south-1
 
+      - name: Wait for nodes to be Ready
+        run: |
+          echo "Waiting for all nodes to be Ready..."
+          kubectl wait --for=condition=Ready nodes --all --timeout=300s
+          echo "Nodes ready:"
+          kubectl get nodes -o wide
+
       - name: Apply Kubernetes manifests
         run: |
           kubectl apply -f k8s/namespace.yaml
