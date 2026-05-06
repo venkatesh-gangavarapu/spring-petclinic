@@ -56,17 +56,17 @@ jobs:
       - name: Wait for config-server
         run: |
           kubectl rollout status deployment/config-server \
-            -n petclinic --timeout=180s
+            -n petclinic --timeout=300s
 
       - name: Wait for discovery-server
         run: |
           kubectl rollout status deployment/discovery-server \
-            -n petclinic --timeout=180s
+            -n petclinic --timeout=300s
 
       - name: Wait for api-gateway
         run: |
           kubectl rollout status deployment/api-gateway \
-            -n petclinic --timeout=180s
+            -n petclinic --timeout=300s
 
       - name: Print LoadBalancer URL
         run: |
