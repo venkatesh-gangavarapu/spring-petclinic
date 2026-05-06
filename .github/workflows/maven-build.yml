@@ -87,3 +87,48 @@ jobs:
           done
           echo "LoadBalancer hostname not ready yet. Check manually:"
           echo "  kubectl get svc api-gateway -n petclinic"
+
+      - name: Diagnose failure
+        if: failure()
+        run: |
+          echo "============================================"
+          echo " POD STATUS"
+          echo "============================================"
+          kubectl get pods -n petclinic -o wide
+
+          echo ""
+          echo "============================================"
+          echo " POD EVENTS (config-server)"
+          echo "============================================"
+          kubectl describe pod -n petclinic -l app=config-server
+
+          echo ""
+          echo "============================================"
+          echo " POD EVENTS (discovery-server)"
+          echo "============================================"
+          kubectl describe pod -n petclinic -l app=discovery-server
+
+          echo ""
+          echo "============================================"
+          echo " POD EVENTS (api-gateway)"
+          echo "============================================"
+          kubectl describe pod -n petclinic -l app=api-gateway
+
+          echo ""
+          echo "============================================"
+          echo " LOGS (config-server)"
+          echo "============================================"
+          kubectl logs -n petclinic -l app=config-server --tail=50 || true
+
+          echo ""
+          echo "============================================"
+          echo " LOGS (discovery-server)"
+          echo "============================================"
+          kubectl logs -n petclinic -l app=discovery-server --tail=50 || true
+
+          echo ""
+          echo "============================================"
+          echo " NODE STATUS"
+          echo "============================================"
+          kubectl get nodes -o wide
+          kubectl describe nodes | grep -A5 "Allocated resources"
