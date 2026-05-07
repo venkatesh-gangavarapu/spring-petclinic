@@ -6,6 +6,10 @@ metadata:
   region: ap-south-1
   version: "1.30"
 
+availabilityZones:
+  - ap-south-1a
+  - ap-south-1b
+
 managedNodeGroups:
   - name: petclinic-nodes
     instanceType: t3.medium
@@ -13,4 +17,4 @@ managedNodeGroups:
     minSize: 1
     maxSize: 3
     volumeSize: 20
-    amiFamily: AmazonLinux2
+    privateNetworking: false
